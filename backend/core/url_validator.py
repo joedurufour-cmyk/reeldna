@@ -2,7 +2,7 @@ import re
 from urllib.parse import urlparse
 
 INSTAGRAM_REEL_PATTERN = re.compile(
-    r'^https?://(www\.)?instagram\.com/reel/[A-Za-z0-9_-]+/?.*$'
+    r'^https?://(www\.)?instagram\.com/reels?/[A-Za-z0-9_-]+/?.*$'
 )
 INSTAGRAM_SHARE_PATTERN = re.compile(
     r'^https?://(www\.)?instagram\.com/share/reel/[A-Za-z0-9_-]+/?.*$'
