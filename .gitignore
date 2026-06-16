@@ -1,0 +1,9 @@
+node_modules/
+dist/
+__pycache__/
+*.pyc
+*.zip
+package-lock.json
+*.log
+.env
+.env.local
