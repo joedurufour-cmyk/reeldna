@@ -68,7 +68,7 @@ def analyze_url(req: AnalyzeUrlRequest):
         return AnalyzeUrlResponse(
             status="NEEDS_MANUAL_TEXT",
             source="url",
-            message="Instagram (and sometimes other platforms) blocks automated extraction from cloud servers. Please paste the caption or transcript text manually below.",
+            message="Instagram blocks cloud extraction. The text you need is already visible below the video on the Instagram page — just select it, copy it, and paste it in the text box below.",
             platform=platform,
         )
 
@@ -93,7 +93,7 @@ def analyze_url(req: AnalyzeUrlRequest):
                 return AnalyzeUrlResponse(
                     status="NEEDS_MANUAL_TEXT",
                     source="url",
-                    message="Could not download or transcribe this video. Please paste the caption or transcript text manually below.",
+                    message="Could not download this video. Copy the caption text you see below the video on Instagram and paste it in the text box below.",
                     platform=platform,
                 )
 

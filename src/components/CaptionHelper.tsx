@@ -1,26 +1,25 @@
 import React from 'react';
-import { Instagram, Music, Youtube, Copy, CheckCircle, ChevronRight, Type } from 'lucide-react';
+import { Instagram, Music, Youtube, Copy, CheckCircle, ChevronDown, Type, MousePointerClick } from 'lucide-react';
 
 const platforms = [
   {
     name: 'Instagram',
     icon: <Instagram className="w-5 h-5 text-pink-400" />,
     steps: [
-      'Open the reel in the Instagram app or website.',
-      'Look below the video for the caption text.',
-      'If it says "... more" — tap it to expand the full caption.',
-      'Select all the text, copy it, and paste it here.',
+      'The text you need is already on the page — look below the video, left side.',
+      'If you see "... more" — click it to expand the full caption.',
+      'Select all the text with your mouse, press Ctrl+C (or Cmd+C).',
+      'Come back to ReelDNA and paste it in the text box below.',
     ],
-    tip: 'If the caption is very short, you can also tap the 3 dots (⋯) → Share → Copy Link, but that only gives the URL. For analysis, you need the actual caption text.',
+    tip: 'The 3-dots menu (⋯) only gives you the URL (Copy Link). That does NOT help. You need the actual text below the video.',
   },
   {
     name: 'TikTok',
     icon: <Music className="w-5 h-5 text-white" />,
     steps: [
-      'Open the video in the TikTok app.',
-      'Tap the caption text below the video.',
-      'If it expands, select all and copy.',
-      'Paste the text here.',
+      'The caption is below the video on the right side (desktop) or below the video (mobile).',
+      'Click the caption to expand if it says "..."',
+      'Select all, copy, and paste here.',
     ],
     tip: 'On desktop, the caption is visible on the right side of the video. You can select and copy it directly.',
   },
@@ -28,8 +27,8 @@ const platforms = [
     name: 'YouTube Shorts',
     icon: <Youtube className="w-5 h-5 text-red-500" />,
     steps: [
-      'Open the Short on YouTube (app or desktop).',
-      'Tap "Show transcript" or look at the description below.',
+      'Open the Short on YouTube.',
+      'Look below the video for the description or tap "Show transcript".',
       'Copy the description or transcript text.',
       'Paste it here.',
     ],
@@ -53,8 +52,15 @@ export const CaptionHelper: React.FC = () => {
         <div className="flex items-center gap-2 mb-4">
           <Type className="w-4 h-4 text-cyan-glow" />
           <h3 className="text-xs font-semibold uppercase tracking-wider text-cyan-glow">
-            How to copy the caption / transcript
+            Where to find the text
           </h3>
+        </div>
+
+        <div className="mb-4 p-3 rounded-lg bg-emerald-400/10 border border-emerald-400/20 flex items-start gap-2.5">
+          <MousePointerClick className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-emerald-200/80 leading-relaxed">
+            <strong>You do not need any menu.</strong> The caption text is already visible on the page, below the video. Just select it with your mouse and copy it.
+          </p>
         </div>
 
         <div className="space-y-5">
@@ -97,11 +103,10 @@ export const CaptionHelper: React.FC = () => {
           ))}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-white/5">
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            <ChevronRight className="w-3 h-3 inline -mt-0.5 mr-1 text-slate-600" />
-            If you can only get the URL, paste it above and we will try to extract it automatically. If that fails, come back here and paste the text manually.
-          </p>
+        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-center gap-2 text-[11px] text-slate-500">
+          <ChevronDown className="w-3 h-3 text-cyan-glow animate-bounce" />
+          Scroll down to paste the text
+          <ChevronDown className="w-3 h-3 text-cyan-glow animate-bounce" />
         </div>
       </div>
     </div>

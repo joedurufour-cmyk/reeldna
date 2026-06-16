@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ScanLine, Trash2, Sparkles, ArrowRight, AlertCircle } from 'lucide-react';
 import { CaptionHelper } from './CaptionHelper';
 
@@ -13,6 +13,14 @@ const EXAMPLE_TEXT = `Nobody tells you this about building a business. I wasted 
 export const InputPanel: React.FC<InputPanelProps> = ({ onAnalyze, isAnalyzing, fallbackMessage }) => {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (fallbackMessage && textareaRef.current) {
+      textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      textareaRef.current.focus();
+    }
+  }, [fallbackMessage]);
 
   const handleAnalyze = () => {
     if (!text.trim()) {
@@ -59,12 +67,13 @@ export const InputPanel: React.FC<InputPanelProps> = ({ onAnalyze, isAnalyzing, 
             )}
 
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Paste transcript or caption
+              Paste transcript or caption here ↓
             </label>
             <textarea
+              ref={textareaRef}
               value={text}
               onChange={(e) => { setText(e.target.value); setError(''); }}
-              placeholder="Paste transcript or caption here..."
+              placeholder="Select the text below the video on Instagram, copy it (Ctrl+C), and paste it here..."
               className="w-full h-48 sm:h-56 bg-transparent text-slate-200 placeholder-slate-600 text-sm leading-relaxed resize-none focus:outline-none scrollbar-thin"
             />
             {error && (
