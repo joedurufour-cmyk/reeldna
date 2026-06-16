@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScanLine, Trash2, Sparkles, ArrowRight, AlertCircle } from 'lucide-react';
+import { CaptionHelper } from './CaptionHelper';
 
 interface InputPanelProps {
   onAnalyze: (text: string) => void;
@@ -111,6 +112,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({ onAnalyze, isAnalyzing, 
           </div>
         </div>
       </div>
+      {fallbackMessage && <CaptionHelper />}
     </section>
   );
 };

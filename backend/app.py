@@ -64,11 +64,11 @@ def analyze_url(req: AnalyzeUrlRequest):
     # 1. Try to extract metadata + caption
     try:
         info = resolve_reel(req.url)
-    except Exception as e:
+    except Exception:
         return AnalyzeUrlResponse(
             status="NEEDS_MANUAL_TEXT",
             source="url",
-            message=f"Could not extract this Reel. {str(e)}",
+            message="Instagram (and sometimes other platforms) blocks automated extraction from cloud servers. Please paste the caption or transcript text manually below.",
             platform=platform,
         )
 
@@ -85,7 +85,7 @@ def analyze_url(req: AnalyzeUrlRequest):
             with tempfile.TemporaryDirectory() as tmpdir:
                 audio_path = download_audio(req.url, tmpdir)
                 transcript = transcribe_audio(audio_path)
-        except Exception as e:
+        except Exception:
             # If audio fails but we have caption, still return caption
             if caption:
                 transcript = caption
@@ -93,7 +93,7 @@ def analyze_url(req: AnalyzeUrlRequest):
                 return AnalyzeUrlResponse(
                     status="NEEDS_MANUAL_TEXT",
                     source="url",
-                    message=f"Could not extract audio or caption. {str(e)}",
+                    message="Could not download or transcribe this video. Please paste the caption or transcript text manually below.",
                     platform=platform,
                 )
 
