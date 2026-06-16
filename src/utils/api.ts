@@ -34,6 +34,19 @@ export async function analyzeUrl(url: string): Promise<AnalyzeUrlResponse> {
   return res.json();
 }
 
-export async function analyzeText(text: string): Promise<{ transcript: string }> {
-  return { transcript: text };
+export async function analyzeVisual(caption: string, images: File[], platform: string = 'instagram'): Promise<{ visual_report: any; transcript: string }> {
+  const formData = new FormData();
+  formData.append('caption', caption);
+  formData.append('platform', platform);
+  images.forEach(img => formData.append('images', img));
+
+  const res = await fetch(`${API_BASE}/api/analyze-visual`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
 }

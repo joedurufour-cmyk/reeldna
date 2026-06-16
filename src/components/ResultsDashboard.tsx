@@ -2,6 +2,7 @@ import React from 'react';
 import { AnalysisResult } from '../types';
 import { ViralDNACard } from './ViralDNACard';
 import { FrameworkBox } from './FrameworkBox';
+import { VisualReportCard } from './VisualReportCard';
 import {
   Anchor,
   Heart,
@@ -235,6 +236,10 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, orig
 
         <ViralDNACard result={result} />
         <FrameworkBox framework={result.stealFramework} />
+
+        {result.visualReport && (
+          <VisualReportCard report={result.visualReport} />
+        )}
 
         {/* Export actions */}
         <div className="flex flex-wrap gap-3 justify-center pt-4">

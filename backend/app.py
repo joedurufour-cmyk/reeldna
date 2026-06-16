@@ -1,20 +1,21 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import tempfile
 import os
+import shutil
 
 from core.url_validator import validate_url
 from core.reel_resolver import resolve_reel, download_audio
 from core.transcriber import transcribe_audio
 from core.report_builder import build_report
+from core.vision_analyzer import analyze_images
 
-app = FastAPI(title="ReelDNA Backend", version="2.0.0")
+app = FastAPI(title="ReelDNA Backend", version="2.1.0")
 
-# Allow frontend origins (Netlify, Render, localhost)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,7 +46,12 @@ def health():
     openai_ready = bool(os.environ.get("OPENAI_API_KEY"))
     return {
         "status": "ok",
-        "version": "2.0.0",
+        "version": "2.1.0",
+        "features": {
+            "text_analysis": True,
+            "url_extraction": True,
+            "vision_analysis": openai_ready,
+        },
         "transcription": {
             "faster_whisper": "ready",
             "openai_api_fallback": "ready" if openai_ready else "no_api_key",
@@ -61,7 +67,6 @@ def analyze_url(req: AnalyzeUrlRequest):
 
     platform = validation["platform"]
 
-    # 1. Try to extract metadata + caption
     try:
         info = resolve_reel(req.url)
     except Exception:
@@ -76,17 +81,14 @@ def analyze_url(req: AnalyzeUrlRequest):
     title = info.get("title", "")
     transcript = ""
 
-    # 2. If caption is good enough, return it as transcript
     if caption and len(caption) > 30:
         transcript = caption
     else:
-        # 3. Try audio download + transcription
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 audio_path = download_audio(req.url, tmpdir)
                 transcript = transcribe_audio(audio_path)
         except Exception:
-            # If audio fails but we have caption, still return caption
             if caption:
                 transcript = caption
             else:
@@ -112,7 +114,6 @@ def analyze_url(req: AnalyzeUrlRequest):
 
 @app.post("/api/analyze-text")
 def analyze_text(req: AnalyzeTextRequest):
-    # Frontend handles analysis; backend just echoes back or validates
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Empty text")
     return {
@@ -121,6 +122,58 @@ def analyze_text(req: AnalyzeTextRequest):
         "transcript": req.text.strip(),
         "report": build_report(req.text.strip(), "", "", "manual"),
     }
+
+
+@app.post("/api/analyze-visual")
+def analyze_visual(
+    caption: str = Form(...),
+    platform: str = Form("instagram"),
+    images: list[UploadFile] = File(...),
+):
+    """
+    Analyze caption + up to 5 screenshots/images using OpenAI GPT-4o mini vision.
+    Returns combined text + visual analysis.
+    """
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise HTTPException(status_code=503, detail="Vision analysis not available. OpenAI API key not configured.")
+
+    if len(images) > 5:
+        raise HTTPException(status_code=400, detail="Maximum 5 images allowed")
+
+    if not caption.strip():
+        raise HTTPException(status_code=400, detail="Caption is required")
+
+    saved_paths = []
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for img in images:
+                if not img.content_type or not img.content_type.startswith("image/"):
+                    continue
+                ext = os.path.splitext(img.filename or "")[1] or ".jpg"
+                path = os.path.join(tmpdir, f"img_{len(saved_paths)}{ext}")
+                with open(path, "wb") as f:
+                    shutil.copyfileobj(img.file, f)
+                saved_paths.append(path)
+            
+            if not saved_paths:
+                raise HTTPException(status_code=400, detail="No valid images uploaded")
+            
+            visual_report = analyze_images(caption, saved_paths, platform)
+            
+            return {
+                "status": "DONE",
+                "source": "visual",
+                "transcript": caption,
+                "report": {
+                    "transcript": caption,
+                    "platform": platform,
+                },
+                "visual_report": visual_report,
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

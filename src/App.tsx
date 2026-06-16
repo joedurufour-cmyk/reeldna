@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { URLInput } from './components/URLInput';
 import { InputPanel } from './components/InputPanel';
+import { PostPanel } from './components/PostPanel';
 import { ResultsDashboard } from './components/ResultsDashboard';
 import { StatusStepper } from './components/StatusStepper';
 import { GuidelinesPanel } from './components/GuidelinesPanel';
-import { AnalysisResult } from './types';
+import { AnalysisResult, VisualReport } from './types';
 import { analyze } from './core/analyzer';
-import { PipelineStatus } from './utils/api';
+import { PipelineStatus, analyzeVisual } from './utils/api';
 
 const App: React.FC = () => {
+  const [mode, setMode] = useState<'video' | 'post'>('video');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [originalText, setOriginalText] = useState('');
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>('IDLE');
@@ -45,6 +47,40 @@ const App: React.FC = () => {
     }, 600);
   };
 
+  const handlePostAnalyze = async (caption: string, images: File[]) => {
+    setIsProcessing(true);
+    setPipelineStatus('ANALYZING');
+    try {
+      const textAnalysis = analyze(caption);
+      let visualReport: VisualReport | undefined;
+
+      if (images.length > 0) {
+        const res = await analyzeVisual(caption, images);
+        visualReport = res.visual_report;
+      }
+
+      const combined: AnalysisResult = {
+        ...textAnalysis,
+        visualReport,
+        summary: textAnalysis.summary + (visualReport
+          ? ` Visual DNA: scroll-stop ${visualReport.visualDNA.scrollStop}/10, emotional impact ${visualReport.visualDNA.emotionalImpact}/10.`
+          : ''),
+      };
+
+      setResult(combined);
+      setOriginalText(caption);
+      setPipelineStatus('DONE');
+    } catch (e: any) {
+      setPipelineStatus('ERROR');
+      setPipelineMessage(e.message || 'Vision analysis failed. Text-only analysis shown below.');
+      const textAnalysis = analyze(caption);
+      setResult(textAnalysis);
+      setOriginalText(caption);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleReset = () => {
     setResult(null);
     setOriginalText('');
@@ -64,7 +100,34 @@ const App: React.FC = () => {
       <div className="relative z-10">
         <Header />
 
-        {!result && !manualMode && (
+        {!result && (
+          <div className="w-full px-4 sm:px-6 lg:px-8 pt-4">
+            <div className="max-w-3xl mx-auto flex items-center justify-center gap-2">
+              <button
+                onClick={() => { setMode('video'); setManualMode(false); }}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${
+                  mode === 'video'
+                    ? 'bg-violet-glow/20 text-violet-glow border border-violet-glow/30'
+                    : 'bg-white/5 text-slate-400 border border-white/10 hover:text-white'
+                }`}
+              >
+                Video / Reel
+              </button>
+              <button
+                onClick={() => { setMode('post'); setManualMode(false); }}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${
+                  mode === 'post'
+                    ? 'bg-cyan-glow/20 text-cyan-glow border border-cyan-glow/30'
+                    : 'bg-white/5 text-slate-400 border border-white/10 hover:text-white'
+                }`}
+              >
+                Post / Carousel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!result && mode === 'video' && !manualMode && (
           <URLInput
             onPipelineStatus={handlePipelineStatus}
             onResult={handleResult}
@@ -79,11 +142,18 @@ const App: React.FC = () => {
           <StatusStepper status={pipelineStatus} message={pipelineMessage} />
         )}
 
-        {manualMode && !result && (
+        {manualMode && !result && mode === 'video' && (
           <InputPanel
             onAnalyze={handleManualAnalyze}
             isAnalyzing={isProcessing}
             fallbackMessage={needsManualMessage}
+          />
+        )}
+
+        {!result && mode === 'post' && (
+          <PostPanel
+            onAnalyze={handlePostAnalyze}
+            isAnalyzing={isProcessing}
           />
         )}
 
@@ -105,7 +175,7 @@ const App: React.FC = () => {
         <GuidelinesPanel />
 
         <footer className="py-8 text-center text-xs text-slate-600">
-          ReelDNA V2 — URL extraction with manual fallback. No login. No Instagram API.
+          ReelDNA V2 — Video URL + Post/Carousel visual analysis. No login.
         </footer>
       </div>
     </div>
